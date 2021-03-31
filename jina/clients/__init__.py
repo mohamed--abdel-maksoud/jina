@@ -10,7 +10,7 @@ from .helper import callback_exec
 from .request import GeneratorSourceType
 from .websocket import WebSocketClientMixin
 from ..enums import RequestType
-from ..drivers.dump import DumpTypes
+from ..executors.dump import DumpTypes
 from ..helper import run_async, deprecated_alias
 
 

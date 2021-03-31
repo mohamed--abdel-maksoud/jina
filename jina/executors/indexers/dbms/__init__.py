@@ -2,7 +2,7 @@ from typing import Optional, List
 
 import numpy as np
 
-from jina.drivers.dump import DumpTypes
+from jina.executors.dump import DumpTypes
 from jina.executors.indexers import BaseIndexer
 
 

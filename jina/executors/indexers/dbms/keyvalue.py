@@ -1,7 +1,7 @@
 import pickle
 from typing import List, Optional
 
-from jina.drivers.dump import DumpPersistor, DumpTypes
+from jina.executors.dump import DumpTypes, DumpPersistor
 from jina.executors.indexers.dbms import BaseDBMSIndexer
 from jina.executors.indexers.keyvalue import BinaryPbIndexer
 

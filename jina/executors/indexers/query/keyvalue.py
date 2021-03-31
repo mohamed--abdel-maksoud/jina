@@ -1,4 +1,4 @@
-from jina.drivers.dump import DumpPersistor
+from jina.executors.dump import DumpPersistor
 from jina.executors.indexers.keyvalue import BinaryPbIndexer
 from jina.executors.indexers.query import BaseQueryIndexer
 

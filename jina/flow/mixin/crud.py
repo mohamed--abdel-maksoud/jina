@@ -5,7 +5,7 @@ import numpy as np
 
 from ...clients.base import InputType, InputDeleteType, CallbackFnType
 from ...enums import DataInputType
-from ...drivers.dump import DumpTypes
+from ...executors.dump import DumpTypes
 from ...helper import deprecated_alias
 
 
