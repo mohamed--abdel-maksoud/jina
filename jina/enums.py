@@ -26,6 +26,12 @@ class EnumType(EnumMeta):
     """The metaclass for BetterEnum."""
 
     def __new__(cls, *args, **kwargs):
+        """Register a new EnumType
+
+        :param args: args passed to super()
+        :param kwargs: kwargs passed to super()
+        :return: the registry class
+        """
         _cls = super().__new__(cls, *args, **kwargs)
         return cls.register_class(_cls)
 
@@ -55,7 +61,10 @@ class BetterEnum(IntEnum, metaclass=EnumType):
 
     @classmethod
     def from_string(cls, s: str):
-        """Parse the enum from a string."""
+        """Parse the enum from a string.
+
+        :param s: the string
+        :return: an instance of the enum (as its respective class)"""
         try:
             return cls[s.upper()]
         except KeyError:
@@ -70,6 +79,10 @@ class BetterEnum(IntEnum, metaclass=EnumType):
         .. note::
             In principle, this should inherit from :class:`JAMLCompatible` directly,
             however, this method is too simple and thus replaced the parent method.
+
+        :param representer: the representer class
+        :param data: the data to represent
+        :return: the representation of the scalar
         """
         return representer.represent_scalar(
             'tag:yaml.org,2002:str', str(data), style='"'
@@ -82,6 +95,10 @@ class BetterEnum(IntEnum, metaclass=EnumType):
         .. note::
             In principle, this should inherit from :class:`JAMLCompatible` directly,
             however, this method is too simple and thus replaced the parent method.
+
+        :param constructor: not used
+        :param node: the node to process
+        :return: the new class instance
         """
         return cls.from_string(node.value)
 
@@ -252,6 +269,8 @@ class RequestType(BetterEnum):
     UPDATE = 3
     CONTROL = 4
     TRAIN = 5
+    # TODO make Dump a control request to be passed to the Pod directly
+    DUMP = 6
 
 
 class CompressAlgo(BetterEnum):
