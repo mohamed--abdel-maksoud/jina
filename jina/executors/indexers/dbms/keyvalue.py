@@ -28,7 +28,11 @@ class DBMSBinaryPbIndexer(BinaryPbIndexer, BaseDBMSIndexer):
         self.handler_mutex = False
         ids = self.query_handler.header.keys()
         DumpPersistor.export_dump_streaming(
-            path, shards=shards, size=self.size, data=self._get_generator(ids)
+            path,
+            shards=shards,
+            size=self.size,
+            data=self._get_generator(ids),
+            formats=formats,
         )
         self.query_handler.close()
         self.handler_mutex = False

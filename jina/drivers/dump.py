@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Optional, Iterable, Tuple
+from typing import Optional, Iterable, Tuple, List
 
 import numpy as np
 
@@ -33,6 +33,15 @@ class DumpDriver(BaseExecutableDriver):
         self.exec_fn(self.req.path, self.req.shards, self.req.formats, *args, **kwargs)
 
 
+BYTE_PADDING = 4
+
+
+class DumpTypes(BetterEnum):
+    """The enum of dump formats"""
+
+    DEFAULT = 0
+
+
 class DumpPersistor:
     """
     Class for creating and importing from dumps
@@ -46,6 +55,7 @@ class DumpPersistor:
         shards: int,
         size: int,
         data: Iterable[Tuple[str, np.array, bytes]],
+        formats: List[DumpTypes],
     ):
         """Export the data to a path, based on sharding,
 
@@ -53,7 +63,16 @@ class DumpPersistor:
         :param shards: the nr of shards this pea is part of
         :param size: total amount of entries
         :param data: the generator of the data (ids, vectors, metadata)
+        :param formats: the list of formats in which we dump
         """
+        for format in formats:
+            if format == DumpTypes.DEFAULT:
+                DumpPersistor._handle_dump(data, path, shards, size)
+            else:
+                raise NotImplementedError('Not other format types supported right now')
+
+    @staticmethod
+    def _handle_dump(data, path, shards, size):
         if os.path.exists(path):
             raise Exception(f'path for dump {path} already exists. Not dumping...')
         size_per_shard = size // shards
@@ -64,22 +83,29 @@ class DumpPersistor:
                 size_this_shard = size_per_shard + extra
             else:
                 size_this_shard = size_per_shard
-            shard_path = os.path.join(path, str(shard_id))
-            shard_written = 0
-            os.makedirs(shard_path)
-            vectors_fh, metas_fh, ids_fh = DumpPersistor._get_file_handlers(shard_path)
-            while shard_written < size_this_shard:
-                id_, vec, meta = next(data)
-                vec_bytes = vec.tobytes()
-                vectors_fh.write(
-                    len(vec_bytes).to_bytes(BYTE_PADDING, sys.byteorder) + vec_bytes
-                )
-                metas_fh.write(len(meta).to_bytes(BYTE_PADDING, sys.byteorder) + meta)
-                ids_fh.write(id_ + '\n')
-                shard_written += 1
-            vectors_fh.close()
-            metas_fh.close()
-            ids_fh.close()
+            DumpPersistor._write_shard_data(data, path, shard_id, size_this_shard)
+
+    @staticmethod
+    def _write_shard_data(data, path, shard_id, size_this_shard):
+        shard_path = os.path.join(path, str(shard_id))
+        shard_docs_written = 0
+        os.makedirs(shard_path)
+        vectors_fp, metas_fp, ids_fp = DumpPersistor._get_file_paths(shard_path)
+        with open(vectors_fp, 'wb') as vectors_fh:
+            with open(metas_fp, 'wb') as metas_fh:
+                with open(ids_fp, 'w') as ids_fh:
+                    while shard_docs_written < size_this_shard:
+                        id_, vec, meta = next(data)
+                        vec_bytes = vec.tobytes()
+                        vectors_fh.write(
+                            len(vec_bytes).to_bytes(BYTE_PADDING, sys.byteorder)
+                            + vec_bytes
+                        )
+                        metas_fh.write(
+                            len(meta).to_bytes(BYTE_PADDING, sys.byteorder) + meta
+                        )
+                        ids_fh.write(id_ + '\n')
+                        shard_docs_written += 1
 
     @staticmethod
     def import_vectors(path: str, pea_id: str):
@@ -141,18 +167,8 @@ class DumpPersistor:
                     break
 
     @staticmethod
-    def _get_file_handlers(shard_path):
-        vectors_fh = open(os.path.join(shard_path, 'vectors'), 'wb')
-        metas_fh = open(os.path.join(shard_path, 'metas'), 'wb')
-        ids_fh = open(os.path.join(shard_path, 'ids'), 'w')
-        return vectors_fh, metas_fh, ids_fh
-
-
-BYTE_PADDING = 4
-
-
-class DumpTypes(BetterEnum):
-    """The enum of dump formats"""
-
-    DEFAULT = 0
-    NUMPY = 1
+    def _get_file_paths(shard_path):
+        vectors_fp = os.path.join(shard_path, 'vectors')
+        metas_fp = os.path.join(shard_path, 'metas')
+        ids_fp = os.path.join(shard_path, 'ids')
+        return vectors_fp, metas_fp, ids_fp
